@@ -25,8 +25,30 @@
 #include <i2c.h>
 #include <mmc.h>
 #include <linux/delay.h>
+#include <efi.h>
+#include <efi_loader.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/* GUID for RZ/V2N U-Boot capsule update */
+#define RZV2N_UBOOT_IMAGE_GUID \
+	EFI_GUID(0x8c5b9c3a, 0x1f4e, 0x4d2b, 0xa3, 0x5c, \
+		 0x7e, 0x8f, 0x9a, 0x2d, 0x1b, 0x4e)
+
+#if IS_ENABLED(CONFIG_EFI_HAVE_CAPSULE_SUPPORT)
+struct efi_fw_image fw_images[] = {
+	{
+		.image_type_id = RZV2N_UBOOT_IMAGE_GUID,
+		.fw_name = u"RZV2N-UBOOT",
+		.image_index = 1,
+	},
+};
+
+struct efi_capsule_update_info update_info = {
+	.num_images = ARRAY_SIZE(fw_images),
+	.images = fw_images,
+};
+#endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
 /* PFC */
 #define PFC_BASE			0x10410000

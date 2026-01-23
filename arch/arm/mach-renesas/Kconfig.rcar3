@@ -319,4 +319,8 @@ config MULTI_DTB_FIT_USER_DEF_ADDR
 config DM_RESET
 	default y if RCAR_GEN3
 
+config RZV2N_DISTRO_BOOT
+	bool "RZ/V2N distro boot command enable"
+	default y if TARGET_RZV2N_EVK
+
 endif
