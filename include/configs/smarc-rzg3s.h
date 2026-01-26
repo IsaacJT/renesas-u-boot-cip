@@ -152,7 +152,7 @@
 
 /* Simplified EFI boot for Ubuntu Classic - directly boot from MMC 1:2 */
 #define SIMPLE_EFI_BOOT \
-        "boot_efi_binary=EFI/ubuntu/grubaa64.efi\0" \
+        "boot_efi_binary=EFI/BOOT/BOOTAA64.efi\0" \
         "boot_efi=" \
                 "load mmc 1:1 ${fdt_addr_r} ${fdtfile}; " \
                 "load mmc 1:2 ${kernel_addr_r} ${boot_efi_binary}; " \
