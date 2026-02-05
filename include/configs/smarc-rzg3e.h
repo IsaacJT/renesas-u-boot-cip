@@ -56,7 +56,7 @@
       "load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state};" \
       "env import -v ${fitloadaddr} ${filesize} ${recovery_vars};" \
       "if test \"${snapd_recovery_mode}\" = \"run\"; then " \
-        "setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} ${snapd_standard_params} rw rootwait earlycon\";" \
+        "setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} ${snapd_standard_params} rw rootwait earlycon modprobe.blacklist=adv7511\";" \
         "setenv kernel_bootpart ${mmc_boot_part};" \
         "load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state};" \
         "env import -v ${fitloadaddr} ${filesize} ${kernel_vars};" \
@@ -78,7 +78,7 @@
         "fi;" \
         "setenv kernel_prefix \"/uboot/ubuntu/${kernel_name}/\";" \
       "else " \
-        "setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} snapd_recovery_system=${snapd_recovery_system} ${snapd_standard_params} rw rootwait earlycon\";" \
+        "setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} snapd_recovery_system=${snapd_recovery_system} ${snapd_standard_params} rw rootwait earlycon modprobe.blacklist=adv7511\";" \
         "setenv kernel_prefix \"/systems/${snapd_recovery_system}/kernel/\";" \
       "fi;" \
       "setenv platform_part 1;"                                           \
@@ -90,6 +90,7 @@
 
 #define UBUNTU_ENV_DEFAULT \
     "kernel_filename=kernel.img\0" \
+    "bootargs=modprobe.blacklist=adv7511\0" \
     "core_state=/uboot/ubuntu/boot.sel\0" \
     "kernel_vars=snap_kernel snap_try_kernel kernel_status\0" \
     "recovery_vars=snapd_recovery_mode snapd_recovery_system snapd_recovery_kernel\0" \
