@@ -40,6 +40,146 @@
 /* SDHI clock freq */
 #define CONFIG_SH_SDHI_FREQ		133000000
 
+
+/* ENV setting */
+#if defined(CONFIG_RZG2L_DISTRO_BOOT)
+
+/* Ubuntu Core FIT Boot Environment */
+#define UBUNTU_ENV_LOAD_BOOT_CONFIG \
+	"load_uc=" \
+		"setenv kernel_bootpart ${mmc_seed_part};" \
+		"load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state};" \
+		"env import ${fitloadaddr} ${filesize} ${recovery_vars};" \
+		"if test \"${snapd_recovery_mode}\" = \"run\"; then " \
+			"setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} ${snapd_standard_params} rw rootwait earlycon\";" \
+			"setenv kernel_bootpart ${mmc_boot_part};" \
+			"load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state};" \
+			"env import ${fitloadaddr} ${filesize} ${kernel_vars};" \
+			"if test -n \"${snap_kernel}\"; then " \
+				"env import -c ${fitloadaddr} ${filesize} ${kernel_vars};" \
+			"fi;" \
+			"setenv kernel_name ${snap_kernel};" \
+			"if test -n \"${kernel_status}\"; then " \
+				"if test \"${kernel_status}\" = \"try\"; then " \
+					"if test -n \"${snap_try_kernel}\"; then " \
+						"setenv kernel_status trying;" \
+						"setenv kernel_name \"${snap_try_kernel}\";" \
+					"fi;" \
+				"elif test \"${kernel_status}\" = \"trying\"; then " \
+					"setenv kernel_status \"\";" \
+				"fi;" \
+				"env export -c ${fitloadaddr} ${kernel_vars};" \
+				"save ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state} ${filesize};" \
+			"fi;" \
+			"setenv kernel_prefix \"/uboot/ubuntu/${kernel_name}/\";" \
+		"else " \
+			"setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} snapd_recovery_system=${snapd_recovery_system} ${snapd_standard_params} rw rootwait earlycon\";" \
+			"setenv kernel_prefix \"/systems/${snapd_recovery_system}/kernel/\";" \
+		"fi;" \
+		"setenv platform_part 1;" \
+		"setenv fit_config r9a07g044l2-smarc.dtb;" \
+		"run loadfiles; " \
+		"bootm ${fitloadaddr}#${fit_config}\0"
+
+#define UBUNTU_ENV_LOAD_FIT_BOOT_FILES \
+	"loadfiles=load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${kernel_prefix}/${kernel_filename}\0"
+
+#define UBUNTU_ENV_DEFAULT \
+	"kernel_filename=kernel.img\0" \
+	"core_state=/uboot/ubuntu/boot.sel\0" \
+	"kernel_vars=snap_kernel snap_try_kernel kernel_status\0" \
+	"recovery_vars=snapd_recovery_mode snapd_recovery_system snapd_recovery_kernel\0" \
+	"snapd_recovery_mode=install\0" \
+	"snapd_standard_params=\0" \
+	UBUNTU_ENV_LOAD_BOOT_CONFIG
+
+/* EFI Boot Environment */
+#define EFI_ENV_DEFAULT \
+	"boot_efi_binary=efi/boot/bootaa64.efi\0" \
+	"scan_for_usb_dev=" \
+		"usb start; " \
+		"if test ! -e usb ${devnum}:1 /; then usb reset; fi;\0" \
+	"scan_boot_efi=" \
+		"part list ${devtype} ${devnum} devplist; " \
+		"env exists devplist || setenv devplist 1; " \
+		"for distro_bootpart in ${devplist}; do " \
+			"if test -e ${devtype} ${devnum}:${distro_bootpart} ${boot_efi_binary}; then " \
+				"load ${devtype} ${devnum}:${distro_bootpart} " \
+				"${kernel_addr_r} ${boot_efi_binary};" \
+				"load ${devtype} ${devnum}:${platform_part} " \
+				"${fdt_addr_r} ${fdtfile};" \
+				"echo BootEFI from <${devtype}> [${devnum}:${distro_bootpart}] " \
+				"dtb from <${devtype}> [${devnum}:${platform_part}] ${fdtfile};" \
+				"bootefi ${kernel_addr_r} ${fdt_addr_r};" \
+			"fi;" \
+		"done;\0" \
+	"mmc0_efi=" \
+		"setenv devnum 0;" \
+		"setenv devtype mmc;" \
+		"run scan_boot_efi;\0" \
+	"mmc1_efi=" \
+		"setenv devnum 1;" \
+		"setenv devtype mmc;" \
+		"run scan_boot_efi;\0" \
+	"usb0_efi=" \
+		"setenv devnum 0;" \
+		"setenv devtype usb;" \
+		"run scan_for_usb_dev;" \
+		"run scan_boot_efi;\0" \
+	"usb1_efi=" \
+		"setenv devnum 1;" \
+		"setenv devtype usb;" \
+		"run scan_for_usb_dev;" \
+		"run scan_boot_efi;\0" \
+	"efi_targets=usb0_efi usb1_efi mmc0_efi mmc1_efi\0" \
+	"boot_efi=" \
+		"for target in ${efi_targets}; do " \
+			"run ${target}; " \
+		"done;\0"
+
+/* Auto-detect Boot Mode (FIT or EFI) */
+#define BOOT_DETECT_ENV \
+	"detect_boot=" \
+		"setenv devtype mmc; setenv devnum 1; setenv distro_bootpart 2; " \
+		"if test -e ${devtype} ${devnum}:${distro_bootpart} ${boot_efi_binary}; then " \
+			"echo Detected EFI boot from ${devtype} ${devnum}:${distro_bootpart}; " \
+			"run boot_efi; " \
+		"else " \
+			"echo Detected Ubuntu Core FIT boot; " \
+			"setenv mmcdev ${devnum}; " \
+			"run load_uc; " \
+			"if test -n \"${fitimage_addr}\"; then " \
+				"echo Booting FIT image at ${fitimage_addr}; " \
+				"bootm ${fitloadaddr}; " \
+			"fi; " \
+		"fi;\0"
+
+#define CFG_EXTRA_ENV_SETTINGS	\
+	"usb_pgood_delay=2000\0" \
+	"fitloadaddr=0x61000000\0" \
+	"fdt_addr_r=0x48000000\0" \
+	"fdtfile="CONFIG_DEFAULT_FDT_FILE"\0" \
+	"kernel_addr_r=0x48080000\0" \
+	"console=ttySC0,115200\0" \
+	"mmc_seed_part=2\0" \
+	"mmc_boot_part=3\0" \
+	"platform_part=1\0" \
+	UBUNTU_ENV_DEFAULT \
+	UBUNTU_ENV_LOAD_FIT_BOOT_FILES \
+	EFI_ENV_DEFAULT \
+	BOOT_DETECT_ENV \
+	"dfu_alt_info=" \
+		"sf 0:0=fip.bin raw 0x60000 0x1F0000\0" \
+	"dfu_bufsiz=" \
+		"0x1F0000\0" \
+	"ipaddr=" \
+		"192.168.10.7\0" \
+	"serverip=" \
+		"192.168.10.3\0" \
+	"bootcmd=run detect_boot\0"
+
+#else
+
 /* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
 #define CONFIG_BOARD_SIZE_LIMIT		1048576
 
@@ -57,6 +197,7 @@
 
 #define CONFIG_BOOTCOMMAND	"env default -a;run bootcmd_check;run bootimage"
 
+#endif
 /* For board */
 /* Ethernet RAVB */
 #define CONFIG_BITBANGMII_MULTI
