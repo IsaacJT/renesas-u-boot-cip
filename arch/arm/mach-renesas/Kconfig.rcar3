@@ -298,5 +298,6 @@ config DM_RESET
 
 config RZV2H_DISTRO_BOOT
 	bool "RZ/V2H distro boot command enable"
+	default y if TARGET_RZV2H_EVK_VER1
 
 endif
