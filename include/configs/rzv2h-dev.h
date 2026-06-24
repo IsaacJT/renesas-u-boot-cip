@@ -54,6 +54,24 @@
 #define UC_EXTRA_BOOTARGS ""
 #endif
 
+/* Renesas accelerator firmware */
+#define RENESAS_ACCEL_ENV \
+	"ocaaddr=0xA8000000\0" \
+	"ocabin=OpenCV_Bin.bin\0" \
+	"codaddr=0xAFD00000\0" \
+	"codbin=Codec_Bin.bin\0" \
+	"load_accel=" \
+		"if load ${devtype} ${devnum}:${platform_part} ${ocaaddr} ${ocabin}; then " \
+			"echo Loaded OpenCV accelerator binary to ${ocaaddr}; " \
+		"else " \
+			"echo WARNING: OpenCV accelerator binary not found on ${devtype} ${devnum}:${platform_part}, skipping; " \
+		"fi;" \
+		"if load ${devtype} ${devnum}:${platform_part} ${codaddr} ${codbin}; then " \
+			"echo Loaded codec binary to ${codaddr}; " \
+		"else " \
+			"echo WARNING: Codec binary not found on ${devtype} ${devnum}:${platform_part}, skipping; " \
+		"fi;\0"
+
 /* Ubuntu Core FIT Boot Environment */
 #define UBUNTU_ENV_LOAD_BOOT_CONFIG \
 	"load_uc=" \
@@ -88,6 +106,7 @@
 		"fi;" \
 		"setenv platform_part 1;" \
 		"setenv fit_config r9a09g057h44-rzv2h-evk.dtb;" \
+		"run load_accel;" \
 		"run loadfiles; " \
 		"bootm ${fitloadaddr}#${fit_config}\0"
 
@@ -118,6 +137,7 @@
 				"${kernel_addr_r} ${boot_efi_binary};" \
 				"load ${devtype} ${devnum}:${platform_part} " \
 				"${fdt_addr_r} ${fdtfile};" \
+				"run load_accel;" \
 				"echo BootEFI from <${devtype}> [${devnum}:${distro_bootpart}] " \
 				"dtb from <${devtype}> [${devnum}:${platform_part}] ${fdtfile};" \
 				"bootefi ${kernel_addr_r} ${fdt_addr_r};" \
@@ -174,6 +194,7 @@
 	"mmc_seed_part=2\0" \
 	"mmc_boot_part=3\0" \
 	"platform_part=1\0" \
+	RENESAS_ACCEL_ENV \
 	UBUNTU_ENV_DEFAULT \
 	UBUNTU_ENV_LOAD_FIT_BOOT_FILES \
 	EFI_ENV_DEFAULT \
