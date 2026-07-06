@@ -57,7 +57,7 @@
       "load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state};" \
       "env import ${fitloadaddr} ${filesize} ${recovery_vars};" \
       "if test \"${snapd_recovery_mode}\" = \"run\"; then " \
-        "setenv bootargs \"console=${console} snapd_recovery_mode=${snapd_recovery_mode} ${snapd_standard_params} rw rootwait earlycon modprobe.blacklist=adv7511\";" \
+        "setenv bootargs \"snapd_recovery_mode=${snapd_recovery_mode} ${snapd_standard_params} rw rootwait earlycon modprobe.blacklist=adv7511\";" \
         "setenv kernel_bootpart ${mmc_boot_part};" \
         "load ${devtype} ${mmcdev}:${kernel_bootpart} ${fitloadaddr} ${core_state};" \
         "env import ${fitloadaddr} ${filesize} ${kernel_vars};" \
